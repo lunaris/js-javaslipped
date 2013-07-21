@@ -3,8 +3,25 @@ var js = angular.module('js', []);
 js.filter('trace', function() {
   var captureAndMark = function(body) {
     var captured =
-          body.replace(/(var\s+)?(\w+)\s*=\s*([^;]+)(;)?$/gm,
-            "$1$2 = __assign('$2', $3)$4"),
+          body.replace(/(var\s+)?(\w+)\s*(=|\+=|-=)\s*([^=][^;]+)(;)?$/gm,
+            function(match, varOrNot, name, operator, value, semiOrNot) {
+              varOrNot = typeof varOrNot === 'undefined' ? '' : varOrNot;
+              semiOrNot = typeof semiOrNot === 'undefined' ? '' : semiOrNot;
+
+              switch (operator) {
+                case '=':
+                  return varOrNot + name + ' = __assign("' + name + '", ' +
+                    value + ')' + semiOrNot;
+
+                case '+=':
+                  return varOrNot + name + ' = __assign("' + name + '", ' +
+                    name + ' + ' + value + ')' + semiOrNot;
+
+                case '-=':
+                  return varOrNot + name + ' = __assign("' + name + '", ' +
+                    name + ' - ' + value + ')' + semiOrNot;
+              }
+            }),
 
         lines = captured.split(/\n/);
 
