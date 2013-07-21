@@ -23,15 +23,18 @@ js.factory('Trace', function() {
               switch (operator) {
                 case '=':
                   return varOrNot + name + ' = __assign("' + name + '", ' +
-                    value + ')' + semiOrNot;
+                    value + '); __recordType("' + name + '", ' + value + ');' +
+                    semiOrNot;
 
                 case '+=':
                   return varOrNot + name + ' = __assign("' + name + '", ' +
-                    name + ' + ' + value + ')' + semiOrNot;
+                    name + ' + ' + value + '); __recordType("' + name + '", ' +
+                    name + ' + ' + value + ');' + semiOrNot;
 
                 case '-=':
                   return varOrNot + name + ' = __assign("' + name + '", ' +
-                    name + ' - ' + value + ')' + semiOrNot;
+                    name + ' - ' + value + '); __recordType("' + name + '", ' +
+                    name + ' - ' + value + ');' + semiOrNot;
               }
             }),
 
@@ -65,6 +68,10 @@ js.factory('Trace', function() {
           });
         },
 
+        __recordType = function(name, value) {
+          __environment[name].type = typeof value;
+        },
+
         __recordTypes = function() {
           if (__changes.length) {
             $.each(__changes, function(i, name) {
@@ -79,8 +86,6 @@ js.factory('Trace', function() {
             __resetChanges();
             __stepNumber++;
           }
-
-          __recordTypes();
 
           __lineNumber = i;
           __steps[__stepNumber] = {
@@ -182,21 +187,27 @@ js.directive('jsArgumentList', function() {
 });
 
 function FunctionCtrl($scope) {
+  $scope.name = '';
   $scope.args = [];
   $scope.body = '';
 
   $scope.setupTest = function() {
+    $scope.name = 'f';
+    $scope.args = ['firstArgument', 'secondArgument'];
+
     $scope.body =
       "var x = 'hello';\n" +
       "var y = 'world';\n" +
       "o = { 'first': 1, second: '2nd' };\n" +
       "copy = firstArgument;\n" +
+      "x = secondArgument;\n" +
       "if (x == y) {\n" +
       "  z = 5;\n" +
       "} else {\n" +
       "  z = 6;\n" +
       "}\n" +
       "\n" +
-      "var f = function() { return 4 };";
+      "var f = function() { return 4 };\n" +
+      "return z;";
   }
 }
