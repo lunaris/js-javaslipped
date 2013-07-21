@@ -27,9 +27,19 @@
             </thead>
             <tbody>
               <tr ng-repeat="(key, info) in step.environment"
-                ng-class="{ error: key == step.changed }">
+                ng-class="{ error: info.changed }">
 
-                <td>{{ key }} ({{ info.type }})</td>
+                <td>
+                  <span class="label"
+                    ng-class="{
+                      'label-important': info.changed,
+                      'label-success': !info.changed
+                    }">
+
+                    {{ info.type }}
+                  </span>
+                  &nbsp;{{ key }}
+                </td>
                 <td>{{ info.value }}</td>
               </tr>
             </tbody>
@@ -49,6 +59,9 @@
         <div class="span4">
           <textarea ng-model="body" class="function-body">
           </textarea>
+          <button ng-click="setupTest()">
+            Setup test
+          </button>
         </div>
         <div class="span8">
           <div js-trace-view body="{{ body }}">

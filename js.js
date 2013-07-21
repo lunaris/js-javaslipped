@@ -38,7 +38,7 @@ js.filter('trace', function() {
 
   var execute = function(capturedMarkedBody) {
     var __environment = {},
-        __changed = null,
+        __changes = [],
 
         __lineNumber = 1,
         __lastLineNumber = 1,
@@ -46,21 +46,34 @@ js.filter('trace', function() {
         __steps = [],
         __stepNumber = 0,
 
+        __resetChanges = function() {
+          __changes = [];
+          $.each(__environment, function(key, _) {
+            __environment[key].changed = false;
+          });
+        },
+
+        __recordTypes = function() {
+          if (__changes.length) {
+            $.each(__changes, function(i, key) {
+              __environment[key].type =
+                eval('typeof ' + key);
+            });
+          }
+        };
+
         __line = function(i, lineSource) {
           if (i != __lastLineNumber) {
-            __changed = null;
+            __resetChanges();
             __stepNumber++;
           }
 
-          if (__changed != null) {
-            __environment[__changed].type =
-              eval('typeof ' + __changed);
-          }
+          __recordTypes();
 
           __lineNumber = i;
           __steps[__stepNumber] = {
-            changed: __changed,
-            environment: $.extend({}, __environment),
+            changes: __changes,
+            environment: $.extend(true, {}, __environment),
             lineNumber: __lineNumber,
             lineSource: lineSource
           };
@@ -69,8 +82,9 @@ js.filter('trace', function() {
         },
 
         __assign = function(key, value) {
-          __changed = key;
+          __changes.push(key);
           __environment[key] = {
+            changed: true,
             type: null,
             value: value
           };
@@ -105,7 +119,3 @@ js.directive('jsTraceView', function($filter) {
     }
   };
 });
-
-function FunctionCtrl($scope) {
-  $scope.body = '';
-}
