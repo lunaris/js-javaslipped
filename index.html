@@ -32,11 +32,15 @@
                     type="text" placeholder="{{ arg }}'s value" />
                 </td>
               </tr>
+              <tr>
+                <td>&laquo;Result&raquo;</td>
+                <td>{{ trace.result }}</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div class="row-fluid" ng-repeat="step in steps">
+      <div class="row-fluid" ng-repeat="step in trace.steps">
         <div class="span6">
           <pre>{{ step.lineSource }}</pre>
         </div>
@@ -96,7 +100,7 @@
           </button>
         </div>
         <div class="span8">
-          <div js-trace-view args="args" body="body">
+          <div js-trace-view name="name" args="args" body="body">
           </div>
         </div>
       </div>

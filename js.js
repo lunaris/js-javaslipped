@@ -1,5 +1,16 @@
 var js = angular.module('js', []);
 
+js.factory('Define', function() {
+  return function(name, args, body) {
+    var wrappedBody = '(function() {' + body + '})();'
+    eval(
+      'window["' + name + '"] = function(' + args + ') {' +
+        'return eval(atob("' + btoa(wrappedBody) + '"));' +
+      '};'
+    );
+  };
+});
+
 js.factory('Trace', function() {
   var captureAndMark = function(body) {
     var lines = body.split(/\n/),
@@ -34,7 +45,7 @@ js.factory('Trace', function() {
       capturedLines[i] = markLineNumber + capturedLines[i] + markLineNumber;
     });
 
-    return capturedLines.join('\n');
+    return '(function() {' + capturedLines.join('\n') + '})()';
   };
 
   var execute = function(capturedMarkedBody) {
@@ -101,40 +112,51 @@ js.factory('Trace', function() {
     };
   };
 
-  return function(args, body) {
+  return function(argValues, body) {
     var capturedMarkedBody = captureAndMark(body),
-        argumentPrefix = '';
+        argumentDeclarations = '';
 
-    $.each(args, function(arg, value) {
-      argumentPrefix += 'var ' + arg + ' = ' + value + ';';
+    $.each(argValues, function(arg, value) {
+      argumentDeclarations += 'var ' + arg + ' = ' + value + ';';
     });
 
-    var fullBody = argumentPrefix + capturedMarkedBody;
+    var fullBody = argumentDeclarations + capturedMarkedBody;
     return execute(fullBody);
   };
 });
 
-js.directive('jsTraceView', function(Trace) {
+js.directive('jsTraceView', function(Define, Trace) {
   return {
     restrict: 'A',
     scope: {
-      'args': '=',
-      'body': '='
+      name: '=',
+      args: '=',
+      body: '='
     },
     templateUrl: '/js-trace-view.html',
     link: function(scope, element, attrs) {
       scope.argValues = {};
 
+      scope.$watch('name', function(newName, oldName) {
+        delete window[oldName];
+        Define(newName, scope.args, scope.body);
+
+        scope.trace = Trace(scope.argValues, scope.body);
+      });
+
       scope.$watch('args', function(args) {
-        scope.steps = Trace({}, scope.body).steps;
+        Define(scope.name, args, scope.body);
+        scope.trace = Trace(scope.argValues, scope.body);
       });
 
       scope.$watch('argValues', function(argValues) {
-        scope.steps = Trace(argValues, scope.body).steps;
+        Define(scope.name, scope.args, scope.body);
+        scope.trace = Trace(argValues, scope.body);
       }, true);
 
       scope.$watch('body', function(body) {
-        scope.steps = Trace({}, body).steps;
+        Define(scope.name, scope.args, body);
+        scope.trace = Trace(scope.argValues, body);
       });
     }
   };
