@@ -52,6 +52,11 @@ js.filter('trace', function() {
             __stepNumber++;
           }
 
+          if (__changed != null) {
+            __environment[__changed].type =
+              eval('typeof ' + __changed);
+          }
+
           __lineNumber = i;
           __steps[__stepNumber] = {
             changed: __changed,
@@ -64,8 +69,11 @@ js.filter('trace', function() {
         },
 
         __assign = function(key, value) {
-          __environment[key] = value;
           __changed = key;
+          __environment[key] = {
+            type: null,
+            value: value
+          };
 
           return value;
         },

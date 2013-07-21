@@ -26,11 +26,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="(key, value) in step.environment"
+              <tr ng-repeat="(key, info) in step.environment"
                 ng-class="{ error: key == step.changed }">
 
-                <td>{{ key }}</td>
-                <td>{{ value }}</td>
+                <td>{{ key }} ({{ info.type }})</td>
+                <td>{{ info.value }}</td>
               </tr>
             </tbody>
           </table>
