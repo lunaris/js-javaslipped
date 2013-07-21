@@ -5,6 +5,13 @@
 
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
     <link rel="stylesheet" href="bootstrap/css/bootstrap-responsive.min.css" />
+
+    <style type="text/css">
+      .function-body {
+        font-family: monospace;
+        width: 100%;
+      }
+    </style>
   </head>
   <body>
     <div class="container-fluid">
@@ -14,14 +21,13 @@
         </div>
       </div>
       <div class="row-fluid">
-        <div class="span6">
-          <textarea ng-model="body">
+        <div class="span4">
+          <textarea ng-model="body" class="function-body">
           </textarea>
         </div>
-        <div class="span6">
-          <pre>
-            {{ body | trace }}
-          </pre>
+        <div class="span8">
+          <div js-trace-view body="{{ body }}">
+          </div>
         </div>
       </div>
     </div>

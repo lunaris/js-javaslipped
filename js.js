@@ -37,15 +37,15 @@ js.filter('trace', function() {
     var __environment = {},
         __lineNumber = 1,
         __lastLineNumber = 1,
-        __trace = [],
-        __step = 0,
+        __steps = [],
+        __stepNumber = 0,
         __line = function(i) {
           if (i != __lastLineNumber) {
-            __step++;
+            __stepNumber++;
           }
 
           __lineNumber = i;
-          __trace[__step] = {
+          __steps[__stepNumber] = {
             lineNumber: __lineNumber,
             environment: $.extend({}, __environment)
           };
@@ -63,12 +63,33 @@ js.filter('trace', function() {
 
     return {
       result: __result,
-      trace: __trace
+      steps: __steps
     };
   };
 
   return function(body) {
     return execute(captureAndMark(body));
+  };
+});
+
+js.directive('jsTraceView', function($filter) {
+  return {
+    restrict: 'A',
+    scope: {
+      'body': '@',
+    },
+    template:
+      '<div class="row-fluid" ng-repeat="step in steps">' +
+        '<div class="span{{ columnWidth }}">' +
+          '<pre>{{ step }}</pre>' +
+        '</div>' +
+      '</div>',
+
+    link: function(scope, element, attrs) {
+      scope.$watch('body', function(body) {
+        scope.steps = $filter('trace')(body).steps;
+      });
+    }
   };
 });
 
