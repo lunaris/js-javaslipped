@@ -9,9 +9,34 @@
     <style type="text/css">
       .function-body {
         font-family: monospace;
+        min-height: 400px;
         width: 100%;
       }
     </style>
+
+    <script type="text/ng-template" id="/js-trace-view.html">
+      <div class="row-fluid" ng-repeat="step in steps">
+        <div class="span6">
+          <pre>{{ step.lineSource }}</pre>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="(key, value) in step.environment"
+                ng-class="{ error: key == step.changed }">
+
+                <td>{{ key }}</td>
+                <td>{{ value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </script>
   </head>
   <body>
     <div class="container-fluid">

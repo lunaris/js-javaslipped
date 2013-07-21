@@ -38,20 +38,26 @@ js.filter('trace', function() {
 
   var execute = function(capturedMarkedBody) {
     var __environment = {},
+        __changed = null,
+
         __lineNumber = 1,
         __lastLineNumber = 1,
+
         __steps = [],
         __stepNumber = 0,
+
         __line = function(i, lineSource) {
           if (i != __lastLineNumber) {
+            __changed = null;
             __stepNumber++;
           }
 
           __lineNumber = i;
           __steps[__stepNumber] = {
+            changed: __changed,
+            environment: $.extend({}, __environment),
             lineNumber: __lineNumber,
-            lineSource: lineSource,
-            environment: $.extend({}, __environment)
+            lineSource: lineSource
           };
 
           __lastLineNumber = __lineNumber;
@@ -59,6 +65,7 @@ js.filter('trace', function() {
 
         __assign = function(key, value) {
           __environment[key] = value;
+          __changed = key;
 
           return value;
         },
@@ -82,13 +89,7 @@ js.directive('jsTraceView', function($filter) {
     scope: {
       'body': '@'
     },
-    template:
-      '<div class="row-fluid" ng-repeat="step in steps">' +
-        '<div class="span6">' +
-          '<pre>{{ step }}</pre>' +
-        '</div>' +
-      '</div>',
-
+    templateUrl: '/js-trace-view.html',
     link: function(scope, element, attrs) {
       scope.$watch('body', function(body) {
         scope.steps = $filter('trace')(body).steps;
