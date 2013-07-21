@@ -1,6 +1,6 @@
 var js = angular.module('js', []);
 
-js.filter('trace', function() {
+js.factory('Trace', function() {
   var captureAndMark = function(body) {
     var lines = body.split(/\n/),
         capturedBody =
@@ -26,12 +26,13 @@ js.filter('trace', function() {
 
         capturedLines = capturedBody.split(/\n/);
 
-    for (var i = 0; i < lines.length; ++i) {
+
+    $.each(lines, function(i, line) {
       var markLineNumber =
-            '; __line(' + (i + 1) + ', atob("' + btoa(lines[i]) + '"));';
+            '; __line(' + (i + 1) + ', atob("' + btoa(line) + '"));';
 
       capturedLines[i] = markLineNumber + capturedLines[i] + markLineNumber;
-    }
+    });
 
     return capturedLines.join('\n');
   };
@@ -48,16 +49,16 @@ js.filter('trace', function() {
 
         __resetChanges = function() {
           __changes = [];
-          $.each(__environment, function(key, _) {
-            __environment[key].changed = false;
+          $.each(__environment, function(name, _) {
+            __environment[name].changed = false;
           });
         },
 
         __recordTypes = function() {
           if (__changes.length) {
-            $.each(__changes, function(i, key) {
-              __environment[key].type =
-                eval('typeof ' + key);
+            $.each(__changes, function(i, name) {
+              __environment[name].type =
+                eval('typeof ' + name);
             });
           }
         };
@@ -81,9 +82,9 @@ js.filter('trace', function() {
           __lastLineNumber = __lineNumber;
         },
 
-        __assign = function(key, value) {
-          __changes.push(key);
-          __environment[key] = {
+        __assign = function(name, value) {
+          __changes.push(name);
+          __environment[name] = {
             changed: true,
             type: null,
             value: value
@@ -100,22 +101,80 @@ js.filter('trace', function() {
     };
   };
 
-  return function(body) {
-    return execute(captureAndMark(body));
+  return function(args, body) {
+    var capturedMarkedBody = captureAndMark(body),
+        argumentPrefix = '';
+
+    $.each(args, function(arg, value) {
+      argumentPrefix += 'var ' + arg + ' = ' + value + ';';
+    });
+
+    var fullBody = argumentPrefix + capturedMarkedBody;
+    return execute(fullBody);
   };
 });
 
-js.directive('jsTraceView', function($filter) {
+js.directive('jsTraceView', function(Trace) {
   return {
     restrict: 'A',
     scope: {
-      'body': '@'
+      'args': '=',
+      'body': '='
     },
     templateUrl: '/js-trace-view.html',
     link: function(scope, element, attrs) {
+      scope.argValues = {};
+
+      scope.$watch('args', function(args) {
+        scope.steps = Trace({}, scope.body).steps;
+      });
+
+      scope.$watch('argValues', function(argValues) {
+        scope.steps = Trace(argValues, scope.body).steps;
+      }, true);
+
       scope.$watch('body', function(body) {
-        scope.steps = $filter('trace')(body).steps;
+        scope.steps = Trace({}, body).steps;
       });
     }
   };
 });
+
+js.directive('jsArgumentList', function() {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function(scope, element, attrs, ngModel) {
+      var fromString = function(s) {
+            return s.split(/\s*,\s*/);
+          },
+
+          toString = function(args) {
+            return args.join(', ');
+          };
+
+      ngModel.$parsers.push(fromString);
+      ngModel.$formatters.push(toString);
+    }
+  };
+});
+
+function FunctionCtrl($scope) {
+  $scope.args = [];
+  $scope.body = '';
+
+  $scope.setupTest = function() {
+    $scope.body =
+      "var x = 'hello';\n" +
+      "var y = 'world';\n" +
+      "o = { 'first': 1, second: '2nd' };\n" +
+      "copy = firstArgument;\n" +
+      "if (x == y) {\n" +
+      "  z = 5;\n" +
+      "} else {\n" +
+      "  z = 6;\n" +
+      "}\n" +
+      "\n" +
+      "var f = function() { return 4 };";
+  }
+}
